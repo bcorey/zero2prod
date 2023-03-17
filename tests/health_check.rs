@@ -6,7 +6,6 @@ use zero2prod::configuration::{ get_configuration, DatabaseSettings };
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 use uuid::Uuid;
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
 
 #[tokio::test]
 async fn health_check_works() {
@@ -76,9 +75,7 @@ async fn spawn_app() -> TestApp {
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // create database
-    let mut connection = PgConnection::connect(
-            &config.connection_string_without_db().expose_secret()
-        )
+    let mut connection = PgConnection::connect_with(&config.without_db())
         .await
         .expect("failed to connect to postgres.");
 
@@ -88,9 +85,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database");
 
     // migrate database
-    let connection_pool = PgPool::connect(
-        &config.connection_string().expose_secret()
-        )
+    let connection_pool = PgPool::connect_with(config.with_db())
         .await
         .expect("Failed to connect to Postgres");
 
